@@ -104,6 +104,7 @@ def main():
     end_date = get_date_input(config['end_date'])
     page_load_wait_time = config['page_load_wait_time']
     max_pts_limit = config['max_points_limit']
+    delta_max_pts_limit = config['delta_max_points_limit']
 
     # Load the other details from JSON file
     with open('auth.json', 'r') as file:
@@ -114,7 +115,7 @@ def main():
     url = auth['url']
 
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
-    results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + str(end_date.strftime('%Y-%m-%d')) + ".txt"
+    results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(end_date.strftime('%Y-%m-%d')) + ".txt"
     urls = [(url + f"/results?departureCity=Seattle&departureIata=SEA&arrivalCity=Charlotte&arrivalIata"
              f"=CLT&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
              f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
@@ -203,7 +204,9 @@ def main():
                 pts_value, points_dollar_value = extract_points(points)
                 if airline_div and pts_value != -1:
                     airline = airline_div.get_text(strip=True)
-                    if pts_value <= max_pts_limit:
+                    if airline == "Delta" and pts_value <= delta_max_pts_limit:
+                        airlines.append(f"{airline}: {pts_value*0.85}")
+                    elif pts_value <= max_pts_limit:
                         airlines.append(f"{airline}: {points_dollar_value}")
 
         # Saving the airline names into a file
