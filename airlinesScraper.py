@@ -105,9 +105,7 @@ def main():
         f.write(f"Results\n")
 
     # Now visit each tab and use BeautifulSoup to parse the page
-    i = -1
     for handle in handles:
-        i = i+1
         driver.switch_to.window(handle)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
@@ -116,9 +114,10 @@ def main():
             lambda tag: tag.name == "div" and tag.get("class", "") and tag["class"][0].startswith("result_"))
 
         airlines = []
+        departure_date = soup.find('input', id='departureDate')['value']
 
         with open(results_filename, 'a') as f:
-            f.write(f"{dates[i]}\n")
+            f.write(f"{departure_date}\n")
             f.write(f"\n\n")
 
         for result in results:
