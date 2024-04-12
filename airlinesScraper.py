@@ -1,10 +1,13 @@
 import time
 from datetime import datetime
+import pickle
 
 from bs4 import BeautifulSoup
 from dateutil.rrule import rrule, DAILY
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 def get_date_input(prompt):
@@ -42,6 +45,21 @@ def extract_points(points_str):
         return -1
 
 
+def select_sort_order(driver):
+    # Waiting for the dropdown button to be clickable and then click it
+    dropdown_button = WebDriverWait(driver, 2).until(
+        EC.element_to_be_clickable((By.ID, "headlessui-menu-button-:rg:"))
+    )
+    dropdown_button.click()
+
+    # Locate the option and click it
+    option_to_select = WebDriverWait(driver, 2).until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[@id='headlessui-menu-button-:rg:']//span[text()='Points Low to High']"))
+    )
+    option_to_select.click()
+
+
 def main():
     start_date = get_date_input("Enter the start date (YYYY-MM-DD): ")
     end_date = get_date_input("Enter the end date (YYYY-MM-DD): ")
@@ -52,6 +70,7 @@ def main():
     password = '12345687Qwe'
     class_of_flight = 'economy'
     default_buffer_wait = 2
+    default_buffer_wait_tab_load = 2
     results_filename = str(start_date.strftime('%Y-%m-%d')) + str(end_date.strftime('%Y-%m-%d')) + ".txt"
     urls = [(f"https://www.point.me/results?departureCity=Seattle&departureIata=SEA&arrivalCity=Charlotte&arrivalIata"
              f"=CLT&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
@@ -59,33 +78,53 @@ def main():
 
     # Initialize the driver
     driver = webdriver.Chrome()
+    driver.set_window_size(1280, 800)  # Set the window size to 1280x800
     driver.get('https://www.point.me')
 
     time.sleep(default_buffer_wait)
 
-    signup_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign up')]")
-    signup_button.click()
+    # Load cookies from the file and add them to the browser
+    is_logged_in: bool = False
+    try:
+        with open('cookies.pkl', 'rb') as file:
+            cookies = pickle.load(file)
+            is_logged_in = True
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+                driver.refresh()  # Refresh the page to make use of the newly added cookies
+    except Exception as e:
+        print("Unable to find cookies file. So default to login path", e)
 
     time.sleep(default_buffer_wait)
 
-    login_link = driver.find_element(By.XPATH, "//a[text()='Log in']")
-    login_link.click()
+    if not is_logged_in:
+        signup_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign up')]")
+        signup_button.click()
 
-    time.sleep(default_buffer_wait)
+        time.sleep(default_buffer_wait)
 
-    # Find and fill the username field
-    username_field = driver.find_element(By.ID, "username")
-    username_field.send_keys(username)
+        login_link = driver.find_element(By.XPATH, "//a[text()='Log in']")
+        login_link.click()
 
-    # Find and fill the password field
-    password_field = driver.find_element(By.ID, "password")
-    password_field.send_keys(password)
+        time.sleep(default_buffer_wait)
 
-    # Find and click the button with the text 'Continue'
-    login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Continue')]")
-    login_button.click()
+        # Find and fill the username field
+        username_field = driver.find_element(By.ID, "username")
+        username_field.send_keys(username)
 
-    time.sleep(default_buffer_wait)
+        # Find and fill the password field
+        password_field = driver.find_element(By.ID, "password")
+        password_field.send_keys(password)
+
+        # Find and click the button with the text 'Continue'
+        login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Continue')]")
+        login_button.click()
+
+        time.sleep(default_buffer_wait)
+
+    # Save cookies to a file after login
+    with open('cookies.pkl', 'wb') as file:
+        pickle.dump(driver.get_cookies(), file)
 
     # Open each URL in a new tab with a delay
     first_tab = True
@@ -94,9 +133,11 @@ def main():
         if first_tab:
             driver.get(url)
             first_tab = False
+            # select_sort_order(driver)
         else:
             driver.execute_script(f"window.open('{url}');")
-        time.sleep(1)  # Delay between opening each tab
+            # select_sort_order(driver)
+        time.sleep(default_buffer_wait_tab_load)  # Delay between opening each tab
         handles.append(driver.window_handles[-1])  # Store the handle of the new tab
 
     time.sleep(page_load_wait_time)
