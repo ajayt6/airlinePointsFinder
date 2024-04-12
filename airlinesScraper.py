@@ -1,6 +1,5 @@
 import time
 from datetime import datetime
-import re
 
 from bs4 import BeautifulSoup
 from dateutil.rrule import rrule, DAILY
@@ -53,7 +52,7 @@ def main():
     password = '12345687Qwe'
     class_of_flight = 'economy'
     default_buffer_wait = 2
-    # departure_date = "2024-06-07"
+    results_filename = str(start_date.strftime('%Y-%m-%d')) + str(end_date.strftime('%Y-%m-%d')) + ".txt"
     urls = [(f"https://www.point.me/results?departureCity=Seattle&departureIata=SEA&arrivalCity=Charlotte&arrivalIata"
              f"=CLT&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
              f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
@@ -102,7 +101,7 @@ def main():
 
     time.sleep(page_load_wait_time)
 
-    with open('airlines.txt', 'w') as f:
+    with open(results_filename, 'w') as f:
         f.write(f"Results\n")
 
     # Now visit each tab and use BeautifulSoup to parse the page
@@ -116,12 +115,9 @@ def main():
         results = soup.find_all(
             lambda tag: tag.name == "div" and tag.get("class", "") and tag["class"][0].startswith("result_"))
 
-        with open('results.txt', 'w') as f:
-            f.write(f"{results}\n")
-
         airlines = []
 
-        with open('airlines.txt', 'a') as f:
+        with open(results_filename, 'a') as f:
             f.write(f"{dates[i]}\n")
             f.write(f"\n\n")
 
@@ -150,7 +146,7 @@ def main():
                         airlines.append(f"{airline}: {points}")
 
         # Saving the airline names into a file
-        with open('airlines.txt', 'a') as f:
+        with open(results_filename, 'a') as f:
             for airline in airlines:
                 f.write(f"{airline}\n")
             f.write(f"\n\n")
