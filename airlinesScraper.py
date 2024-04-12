@@ -29,6 +29,7 @@ def get_date_input(date):
 def extract_points(points_str):
     # Find the index of the first occurrence of " pts"
     index = points_str.find(" pts")
+    star_index = points_str.find("*")
 
     if index != -1:
         # Extract the part of the string before " pts"
@@ -46,7 +47,8 @@ def extract_points(points_str):
         number = int(number_str)
 
         print(number)
-        return number
+        points_dollar_value = points_str[:star_index].strip()
+        return number, points_dollar_value
     else:
         print("The string ' pts' was not found.")
         return -1
@@ -198,11 +200,11 @@ def main():
 
                 # Find the preceding sibling that should contain the airline name
                 airline_div = economy_div.find_previous_sibling("div")
-                pts_value = extract_points(points)
+                pts_value, points_dollar_value = extract_points(points)
                 if airline_div and pts_value != -1:
                     airline = airline_div.get_text(strip=True)
                     if pts_value <= max_pts_limit:
-                        airlines.append(f"{airline}: {points}")
+                        airlines.append(f"{airline}: {points_dollar_value}")
 
         # Saving the airline names into a file
         with open(results_filename, 'a') as f:
