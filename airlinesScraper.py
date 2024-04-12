@@ -26,7 +26,7 @@ def get_date_input(date):
             print("Invalid date format. Please use YYYY-MM-DD format.")
 
 
-def extract_points(points_str):
+def extract_points(points_str, airline):
     # Find the index of the first occurrence of " pts"
     index = points_str.find(" pts")
     star_index = points_str.find("*")
@@ -45,8 +45,7 @@ def extract_points(points_str):
 
         # Convert to integer
         number = int(number_str)
-
-        print(number)
+        print(f"{number} : {airline}")
         points_dollar_value = points_str[:star_index].strip()
         return number, points_dollar_value
     else:
@@ -95,6 +94,24 @@ def explicit_login(driver, username, password):
     time.sleep(default_buffer_wait)
 
 
+def scroll_down(driver):
+    # Initial call to execute_script to scroll down
+    last_height = driver.execute_script("return document.body.scrollHeight")
+
+    while True:
+        # Scroll to the bottom of the page
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+        # Wait to load page
+        time.sleep(1)  # Adjust this depending upon your page's response time
+
+        # Calculate new scroll height and compare with last scroll height
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+
+
 def main():
     # Load the configuration from the JSON file
     with open('config.json', 'r') as file:
@@ -105,6 +122,10 @@ def main():
     page_load_wait_time = config['page_load_wait_time']
     max_pts_limit = config['max_points_limit']
     delta_max_pts_limit = config['delta_max_points_limit']
+    departureCity = config['departureCity']
+    departureIata = config['departureIata']
+    arrivalCity = config['arrivalCity']
+    arrivalIata = config['arrivalIata']
 
     # Load the other details from JSON file
     with open('auth.json', 'r') as file:
@@ -115,10 +136,12 @@ def main():
     url = auth['url']
 
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
-    results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(end_date.strftime('%Y-%m-%d')) + ".txt"
-    urls = [(url + f"/results?departureCity=Seattle&departureIata=SEA&arrivalCity=Charlotte&arrivalIata"
-             f"=CLT&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
-             f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
+    results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
+        end_date.strftime('%Y-%m-%d')) + ".txt"
+    urls = [(
+                        url + f"/results?departureCity={departureCity}&departureIata={departureIata}&arrivalCity={arrivalCity}&arrivalIata"
+                              f"={arrivalIata}&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
+                              f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
 
     # Initialize the driver
     driver = webdriver.Chrome()
@@ -170,6 +193,7 @@ def main():
     # Now visit each tab and use BeautifulSoup to parse the page
     for handle in handles:
         driver.switch_to.window(handle)
+        scroll_down(driver)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Find all divs that have a class attribute starting with 'result_'
@@ -202,16 +226,19 @@ def main():
                 # Find the preceding sibling that should contain the airline name
                 airline_div = economy_div.find_previous_sibling("div")
                 time_div = airline_div.find_parent().find_previous_sibling("div")
-                print(time_div)
                 time_span = time_div.find("span")
                 time_value = time_span.text
-                pts_value, points_dollar_value = extract_points(points)
+                airline = airline_div.get_text(strip=True)
+                pts_value, points_dollar_value = extract_points(points, airline)
                 if airline_div and pts_value != -1:
-                    airline = airline_div.get_text(strip=True)
                     if airline == "Delta" and pts_value <= delta_max_pts_limit:
-                        airlines.append(f"{airline} : {time_value} : {pts_value*0.85}")
+                        value = f"{airline} : {time_value} : {pts_value * 0.85}"
+                        print(f"{value}\n")
+                        airlines.append(value)
                     elif pts_value <= max_pts_limit:
-                        airlines.append(f"{airline} : {time_value} : {points_dollar_value}")
+                        value = f"{airline} : {time_value} : {points_dollar_value}"
+                        print(f"{value}\n")
+                        airlines.append(value)
 
         # Saving the airline names into a file
         with open(results_filename, 'a') as f:
