@@ -124,6 +124,7 @@ def main():
     departureIata = config['departureIata']
     arrivalCity = config['arrivalCity']
     arrivalIata = config['arrivalIata']
+    max_duration_hours = config['max_duration_hours']
 
     # Load the other details from JSON file
     with open('auth.json', 'r') as file:
@@ -231,7 +232,7 @@ def main():
                 duration_full = economy_div.find_next_sibling("div").get_text(strip=True).replace('\xa0', ' ')
                 hour_index = duration_full.find("h")
                 duration_hours = duration_full[:hour_index]
-                if airline_div and pts_value != -1:
+                if airline_div and pts_value != -1 and int(duration_hours) <= max_duration_hours:
                     if airline == "Delta" and pts_value <= delta_max_pts_limit:
                         value = f"{airline} : {duration_hours} : {time_value} : {pts_value * 0.85}"
                         print(f"{value}\n")
