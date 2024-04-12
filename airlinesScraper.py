@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+import re
 
 from bs4 import BeautifulSoup
 from dateutil.rrule import rrule, DAILY
@@ -16,10 +17,37 @@ def get_date_input(prompt):
             print("Invalid date format. Please use YYYY-MM-DD format.")
 
 
+def extract_points(points_str):
+    # Find the index of the first occurrence of " pts"
+    index = points_str.find(" pts")
+
+    if index != -1:
+        # Extract the part of the string before " pts"
+        # Assuming a reasonable distance before " pts" for the number
+        number_str = points_str[:index].strip()
+
+        # If there are multiple numbers or elements, take the last part which should be the number
+        # This is split on space and takes the last segment assuming it's the number
+        number_str = number_str.split()[-1]
+
+        # Remove commas
+        number_str = number_str.replace(',', '')
+
+        # Convert to integer
+        number = int(number_str)
+
+        print(number)
+        return number
+    else:
+        print("The string ' pts' was not found.")
+        return -1
+
+
 def main():
     start_date = get_date_input("Enter the start date (YYYY-MM-DD): ")
     end_date = get_date_input("Enter the end date (YYYY-MM-DD): ")
     page_load_wait_time = int(input("Enter main page load wait time in seconds: "))
+    max_pts_limit = int(input("Enter max points limit: "))
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
     username = 'yojathoma+2@gmail.com'
     password = '12345687Qwe'
@@ -62,6 +90,7 @@ def main():
 
     # Open each URL in a new tab with a delay
     first_tab = True
+    handles = []  # To store the window handles of the tabs
     for url in urls:
         if first_tab:
             driver.get(url)
@@ -69,6 +98,7 @@ def main():
         else:
             driver.execute_script(f"window.open('{url}');")
         time.sleep(1)  # Delay between opening each tab
+        handles.append(driver.window_handles[-1])  # Store the handle of the new tab
 
     time.sleep(page_load_wait_time)
 
@@ -76,8 +106,10 @@ def main():
         f.write(f"Results\n")
 
     # Now visit each tab and use BeautifulSoup to parse the page
-    for i in range(len(urls)):
-        driver.switch_to.window(driver.window_handles[i])
+    i = -1
+    for handle in handles:
+        i = i+1
+        driver.switch_to.window(handle)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Find all divs that have a class attribute starting with 'result_'
@@ -104,10 +136,6 @@ def main():
                 c_div = b_div.find_next_sibling("div")
                 points_div = c_div.find_next_sibling("div").find(lambda tag: tag.name == "div" and "pts" in tag.text)
 
-                print("\n")
-                print(c_div.find_next_sibling("div"))
-                print("\n")
-
                 if points_div:
                     points = points_div.get_text(strip=True)
                 else:
@@ -115,9 +143,11 @@ def main():
 
                 # Find the preceding sibling that should contain the airline name
                 airline_div = economy_div.find_previous_sibling("div")
-                if airline_div:
+                pts_value = extract_points(points)
+                if airline_div and pts_value != -1:
                     airline = airline_div.get_text(strip=True)
-                    airlines.append(f"{airline}: {points}")
+                    if pts_value <= max_pts_limit:
+                        airlines.append(f"{airline}: {points}")
 
         # Saving the airline names into a file
         with open('airlines.txt', 'a') as f:
