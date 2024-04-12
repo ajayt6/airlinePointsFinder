@@ -10,8 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-# username = 'yojathoma+2@gmail.com'
-# password = '12345687Qwe'
 class_of_flight = 'economy'
 default_buffer_wait = 2
 default_buffer_wait_tab_load = 2
@@ -227,16 +225,19 @@ def main():
                 airline_div = economy_div.find_previous_sibling("div")
                 time_div = airline_div.find_parent().find_previous_sibling("div")
                 time_span = time_div.find("span")
-                time_value = time_span.text
+                time_value = time_span.text.replace('\xa0', ' ')
                 airline = airline_div.get_text(strip=True)
                 pts_value, points_dollar_value = extract_points(points, airline)
+                duration_full = economy_div.find_next_sibling("div").get_text(strip=True).replace('\xa0', ' ')
+                hour_index = duration_full.find("h")
+                duration_hours = duration_full[:hour_index]
                 if airline_div and pts_value != -1:
                     if airline == "Delta" and pts_value <= delta_max_pts_limit:
-                        value = f"{airline} : {time_value} : {pts_value * 0.85}"
+                        value = f"{airline} : {duration_hours} : {time_value} : {pts_value * 0.85}"
                         print(f"{value}\n")
                         airlines.append(value)
                     elif pts_value <= max_pts_limit:
-                        value = f"{airline} : {time_value} : {points_dollar_value}"
+                        value = f"{airline} : {duration_hours} : {time_value} : {points_dollar_value}"
                         print(f"{value}\n")
                         airlines.append(value)
 
