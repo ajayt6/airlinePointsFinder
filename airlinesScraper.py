@@ -10,6 +10,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+# username = 'yojathoma+2@gmail.com'
+# password = '12345687Qwe'
+class_of_flight = 'economy'
+default_buffer_wait = 2
+default_buffer_wait_tab_load = 2
+
 
 def get_date_input(date):
     while True:
@@ -61,6 +67,32 @@ def select_sort_order(driver):
     option_to_select.click()
 
 
+def explicit_login(driver, username, password):
+    signup_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign up')]")
+    signup_button.click()
+
+    time.sleep(default_buffer_wait)
+
+    login_link = driver.find_element(By.XPATH, "//a[text()='Log in']")
+    login_link.click()
+
+    time.sleep(default_buffer_wait)
+
+    # Find and fill the username field
+    username_field = driver.find_element(By.ID, "username")
+    username_field.send_keys(username)
+
+    # Find and fill the password field
+    password_field = driver.find_element(By.ID, "password")
+    password_field.send_keys(password)
+
+    # Find and click the button with the text 'Continue'
+    login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Continue')]")
+    login_button.click()
+
+    time.sleep(default_buffer_wait)
+
+
 def main():
     # Load the configuration from the JSON file
     with open('config.json', 'r') as file:
@@ -71,21 +103,24 @@ def main():
     page_load_wait_time = config['page_load_wait_time']
     max_pts_limit = config['max_points_limit']
 
+    # Load the other details from JSON file
+    with open('auth.json', 'r') as file:
+        auth = json.load(file)
+
+    username = auth['username']
+    password = auth['password']
+    url = auth['url']
+
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
-    username = 'yojathoma+2@gmail.com'
-    password = '12345687Qwe'
-    class_of_flight = 'economy'
-    default_buffer_wait = 2
-    default_buffer_wait_tab_load = 2
-    results_filename = str(start_date.strftime('%Y-%m-%d')) + str(end_date.strftime('%Y-%m-%d')) + ".txt"
-    urls = [(f"https://www.point.me/results?departureCity=Seattle&departureIata=SEA&arrivalCity=Charlotte&arrivalIata"
+    results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + str(end_date.strftime('%Y-%m-%d')) + ".txt"
+    urls = [(url + f"/results?departureCity=Seattle&departureIata=SEA&arrivalCity=Charlotte&arrivalIata"
              f"=CLT&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
              f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
 
     # Initialize the driver
     driver = webdriver.Chrome()
     driver.set_window_size(1280, 800)  # Set the window size to 1280x800
-    driver.get('https://www.point.me')
+    driver.get(url)
 
     time.sleep(default_buffer_wait)
 
@@ -104,29 +139,7 @@ def main():
     time.sleep(default_buffer_wait)
 
     if not is_logged_in:
-        signup_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign up')]")
-        signup_button.click()
-
-        time.sleep(default_buffer_wait)
-
-        login_link = driver.find_element(By.XPATH, "//a[text()='Log in']")
-        login_link.click()
-
-        time.sleep(default_buffer_wait)
-
-        # Find and fill the username field
-        username_field = driver.find_element(By.ID, "username")
-        username_field.send_keys(username)
-
-        # Find and fill the password field
-        password_field = driver.find_element(By.ID, "password")
-        password_field.send_keys(password)
-
-        # Find and click the button with the text 'Continue'
-        login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Continue')]")
-        login_button.click()
-
-        time.sleep(default_buffer_wait)
+        explicit_login(driver, username, password)
 
     # Save cookies to a file after login
     with open('cookies.pkl', 'wb') as file:
