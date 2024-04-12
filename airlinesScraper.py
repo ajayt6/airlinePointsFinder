@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 import pickle
+import json
 
 from bs4 import BeautifulSoup
 from dateutil.rrule import rrule, DAILY
@@ -10,9 +11,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-def get_date_input(prompt):
+def get_date_input(date):
     while True:
-        date_str = input(prompt)
+        date_str = date
         try:
             return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
@@ -61,10 +62,15 @@ def select_sort_order(driver):
 
 
 def main():
-    start_date = get_date_input("Enter the start date (YYYY-MM-DD): ")
-    end_date = get_date_input("Enter the end date (YYYY-MM-DD): ")
-    page_load_wait_time = int(input("Enter main page load wait time in seconds: "))
-    max_pts_limit = int(input("Enter max points limit: "))
+    # Load the configuration from the JSON file
+    with open('config.json', 'r') as file:
+        config = json.load(file)
+
+    start_date = get_date_input(config['start_date'])
+    end_date = get_date_input(config['end_date'])
+    page_load_wait_time = config['page_load_wait_time']
+    max_pts_limit = config['max_points_limit']
+
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
     username = 'yojathoma+2@gmail.com'
     password = '12345687Qwe'
