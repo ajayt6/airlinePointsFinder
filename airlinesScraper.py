@@ -201,13 +201,17 @@ def main():
 
                 # Find the preceding sibling that should contain the airline name
                 airline_div = economy_div.find_previous_sibling("div")
+                time_div = airline_div.find_parent().find_previous_sibling("div")
+                print(time_div)
+                time_span = time_div.find("span")
+                time_value = time_span.text
                 pts_value, points_dollar_value = extract_points(points)
                 if airline_div and pts_value != -1:
                     airline = airline_div.get_text(strip=True)
                     if airline == "Delta" and pts_value <= delta_max_pts_limit:
-                        airlines.append(f"{airline}: {pts_value*0.85}")
+                        airlines.append(f"{airline} : {time_value} : {pts_value*0.85}")
                     elif pts_value <= max_pts_limit:
-                        airlines.append(f"{airline}: {points_dollar_value}")
+                        airlines.append(f"{airline} : {time_value} : {points_dollar_value}")
 
         # Saving the airline names into a file
         with open(results_filename, 'a') as f:
