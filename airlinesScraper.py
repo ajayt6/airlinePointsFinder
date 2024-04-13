@@ -5,6 +5,8 @@ import json
 import smtplib
 from email.message import EmailMessage
 import chardet
+import requests
+import platform
 
 from bs4 import BeautifulSoup
 from dateutil.rrule import rrule, DAILY
@@ -142,10 +144,23 @@ def send_email(subject, content):
     except Exception as e:
         print(f"Failed to send email: {e}")
 
+def send_notification(title, message, token, server):
+    url = f'{server}/message?token={token}'
+    headers = {'Content-Type': 'application/json'}
+    data = {
+        'title': title,
+        'message': message,
+        'priority': 5
+    }
+    response = requests.post(url, json=data, headers=headers)
+    return response.json()
+
 
 def main():
-    display = Display(visible=0, size=(800, 600))
-    display.start()
+    global display
+    if platform.system() != 'Windows':
+        display = Display(visible=0, size=(800, 600))
+        display.start()
     # Load the configuration from the JSON file
     with open('config.json', 'r') as file:
         config = json.load(file)
@@ -305,9 +320,12 @@ def main():
         encoding = result['encoding']
         email_content = raw_data.decode(encoding)
         send_email(results_filename, email_content)
+        send_notification(results_filename, email_content, auth['gotify_token'],
+                          auth['gotify_server'])
 
     driver.quit()
-    display.stop()
+    if platform.system() != 'Windows':
+        display.stop()
 
 
 main()
