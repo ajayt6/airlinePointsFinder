@@ -1,7 +1,7 @@
 {
-    "start_date": "2024-07-11",
-    "end_date": "2024-07-20",
-    "page_load_wait_time": 90,
+    "start_date": "2024-07-01",
+    "end_date": "2024-07-01",
+    "page_load_wait_time": 5,
     "max_points_limit": 15000,
     "delta_max_points_limit": 25000,
     "departureCity": "Seattle",
@@ -9,5 +9,5 @@
     "arrivalCity": "Charlotte",
     "arrivalIata": "CLT",
     "max_duration_hours": 9,
-    "return": true
+    "return": false
 }

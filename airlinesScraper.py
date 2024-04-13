@@ -2,6 +2,9 @@ import time
 from datetime import datetime
 import pickle
 import json
+import smtplib
+from email.message import EmailMessage
+import chardet
 
 from bs4 import BeautifulSoup
 from dateutil.rrule import rrule, DAILY
@@ -110,6 +113,34 @@ def scroll_down(driver):
         last_height = new_height
 
 
+def send_email(subject, content):
+    # Load the email configuration from the JSON file
+    with open('emailConfig.json', 'r') as file:
+        email_config = json.load(file)
+    # Create the email content
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = email_config['email']
+    msg['To'] = email_config['to']
+    msg.set_content(content)
+
+    # Gmail SMTP server configuration
+    smtp_server = email_config['smtp_server']
+    smtp_port = email_config['smtp_port']
+    username = email_config['email']
+    password = email_config['email_password']
+
+    # Send the email
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(username, password)
+            server.send_message(msg)
+            print("Email sent successfully!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+
 def main():
     # Load the configuration from the JSON file
     with open('config.json', 'r') as file:
@@ -146,9 +177,9 @@ def main():
 
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
     urls = [(
-                        url + f"/results?departureCity={departure_city}&departureIata={departure_iata}&arrivalCity={arrival_city}&arrivalIata"
-                              f"={arrival_iata}&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
-                              f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
+            url + f"/results?departureCity={departure_city}&departureIata={departure_iata}&arrivalCity={arrival_city}&arrivalIata"
+                  f"={arrival_iata}&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
+                  f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
 
     # Initialize the driver
     driver = webdriver.Chrome()
@@ -255,6 +286,13 @@ def main():
             for airline in airlines:
                 f.write(f"{airline}\n")
             f.write(f"\n\n")
+
+        with open(results_filename, 'rb') as file:
+            raw_data = file.read()
+            result = chardet.detect(raw_data)
+            encoding = result['encoding']
+            email_content = raw_data.decode(encoding)
+            send_email(results_filename, email_content)
 
 
 main()
