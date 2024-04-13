@@ -13,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
+from pyvirtualdisplay import Display
 
 class_of_flight = 'economy'
 default_buffer_wait = 2
@@ -143,6 +144,8 @@ def send_email(subject, content):
 
 
 def main():
+    display = Display(visible=0, size=(800, 600))
+    display.start()
     # Load the configuration from the JSON file
     with open('config.json', 'r') as file:
         config = json.load(file)
@@ -303,6 +306,7 @@ def main():
         send_email(results_filename, email_content)
 
     driver.quit()
+    display.stop()
 
 
 main()
