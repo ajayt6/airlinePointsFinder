@@ -12,6 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 
 class_of_flight = 'economy'
 default_buffer_wait = 2
@@ -182,8 +183,15 @@ def main():
                   f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
 
     # Initialize the driver
-    driver = webdriver.Chrome()
-    driver.set_window_size(1280, 800)  # Set the window size to 1280x800
+    options = Options()
+    options.headless = True
+    options.add_argument("--window-size=1920,1080")  # Optional, set the window size
+    options.add_argument("--no-sandbox")  # Bypass OS security model, necessary on some systems
+    options.add_argument("--disable-gpu")  # Applicable to windows os only
+    options.add_argument("--disable-extensions")  # Disabling extensions
+    options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+    driver = webdriver.Chrome(options=options)
+    # driver.set_window_size(1280, 800)  # Set the window size to 1280x800
     driver.get(url)
 
     time.sleep(default_buffer_wait)
@@ -287,12 +295,14 @@ def main():
                 f.write(f"{airline}\n")
             f.write(f"\n\n")
 
-        with open(results_filename, 'rb') as file:
-            raw_data = file.read()
-            result = chardet.detect(raw_data)
-            encoding = result['encoding']
-            email_content = raw_data.decode(encoding)
-            send_email(results_filename, email_content)
+    with open(results_filename, 'rb') as file:
+        raw_data = file.read()
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+        email_content = raw_data.decode(encoding)
+        send_email(results_filename, email_content)
+
+    driver.quit()
 
 
 main()

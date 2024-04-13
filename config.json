@@ -1,13 +1,13 @@
 {
-    "start_date": "2024-07-01",
-    "end_date": "2024-07-01",
-    "page_load_wait_time": 5,
-    "max_points_limit": 15000,
-    "delta_max_points_limit": 25000,
+    "start_date": "2024-08-01",
+    "end_date": "2024-08-10",
+    "page_load_wait_time": 90,
+    "max_points_limit": 40000,
+    "delta_max_points_limit": 50000,
     "departureCity": "Seattle",
     "departureIata": "SEA",
-    "arrivalCity": "Charlotte",
-    "arrivalIata": "CLT",
-    "max_duration_hours": 9,
+    "arrivalCity": "Tokyo",
+    "arrivalIata": "NRT",
+    "max_duration_hours": 15,
     "return": false
 }
