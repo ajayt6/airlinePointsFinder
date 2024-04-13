@@ -120,11 +120,21 @@ def main():
     page_load_wait_time = config['page_load_wait_time']
     max_pts_limit = config['max_points_limit']
     delta_max_pts_limit = config['delta_max_points_limit']
-    departureCity = config['departureCity']
-    departureIata = config['departureIata']
-    arrivalCity = config['arrivalCity']
-    arrivalIata = config['arrivalIata']
+    departure_city = config['departureCity']
+    departure_iata = config['departureIata']
+    arrival_city = config['arrivalCity']
+    arrival_iata = config['arrivalIata']
     max_duration_hours = config['max_duration_hours']
+    is_return = config['return']
+
+    if is_return:
+        departure_city, arrival_city = arrival_city, departure_city
+        departure_iata, arrival_iata = arrival_iata, departure_iata
+        results_filename = "results\\return_" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
+            end_date.strftime('%Y-%m-%d')) + ".txt"
+    else:
+        results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
+            end_date.strftime('%Y-%m-%d')) + ".txt"
 
     # Load the other details from JSON file
     with open('auth.json', 'r') as file:
@@ -135,11 +145,9 @@ def main():
     url = auth['url']
 
     dates = list(rrule(DAILY, dtstart=start_date, until=end_date))
-    results_filename = "results\\" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
-        end_date.strftime('%Y-%m-%d')) + ".txt"
     urls = [(
-                        url + f"/results?departureCity={departureCity}&departureIata={departureIata}&arrivalCity={arrivalCity}&arrivalIata"
-                              f"={arrivalIata}&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
+                        url + f"/results?departureCity={departure_city}&departureIata={departure_iata}&arrivalCity={arrival_city}&arrivalIata"
+                              f"={arrival_iata}&legType=oneWay&classOfService=economy&passengers=1&pid=&depar"
                               f"tureDate={date.strftime('%Y-%m-%d')}&arrivalDate=2024-07-29") for date in dates]
 
     # Initialize the driver
