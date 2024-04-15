@@ -181,10 +181,10 @@ def main():
     if is_return:
         departure_city, arrival_city = arrival_city, departure_city
         departure_iata, arrival_iata = arrival_iata, departure_iata
-        results_filename = "results\\return_" + departure_arrival_iata + "_" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
+        results_filename = "results/return_" + departure_arrival_iata + "_" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
             end_date.strftime('%Y-%m-%d')) + ".txt"
     else:
-        results_filename = "results\\" + departure_arrival_iata + "_" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
+        results_filename = "results/" + departure_arrival_iata + "_" + str(start_date.strftime('%Y-%m-%d')) + "__" + str(
             end_date.strftime('%Y-%m-%d')) + ".txt"
 
     # Load the other details from JSON file
